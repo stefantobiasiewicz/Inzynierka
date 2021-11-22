@@ -1,27 +1,27 @@
 _build/nrf52840_xxaa/nrf_log_backend_serial.c.o: \
  ../../../../../../components/libraries/log/src/nrf_log_backend_serial.c \
  ../../../../../../components/libraries/util/sdk_common.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stdint.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\stdint.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\_default_types.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\features.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\_newlib_version.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_intsup.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_stdint.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stdbool.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\string.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\_ansi.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\newlib.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\config.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\ieeefp.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\reent.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\_ansi.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stddef.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_types.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\_types.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\lock.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\cdefs.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\string.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stdint.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/stdint.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/_default_types.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/features.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/_newlib_version.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_intsup.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_stdint.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stdbool.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/string.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/_ansi.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/newlib.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/config.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/ieeefp.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/reent.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/_ansi.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stddef.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_types.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/_types.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/lock.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/cdefs.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/string.h \
  ../config/sdk_config.h \
  ../../../../../../components/libraries/util/nordic_common.h \
  ../../../../../../modules/nrfx/mdk/compiler_abstraction.h \
@@ -47,18 +47,18 @@ _build/nrf52840_xxaa/nrf_log_backend_serial.c.o: \
  ../../../../../../components/libraries/log/src/nrf_log_backend_serial.h \
  ../../../../../../components/libraries/log/nrf_log_backend_interface.h \
  ../../../../../../components/libraries/memobj/nrf_memobj.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\stdlib.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\stdlib.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/stdlib.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/stdlib.h \
  ../../../../../../components/libraries/util/sdk_errors.h \
  ../../../../../../components/libraries/balloc/nrf_balloc.h \
  ../../../../../../components/libraries/util/app_util_platform.h \
  ../../../../../../components/libraries/util/app_error.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\stdio.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stdarg.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\types.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_pthreadtypes.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\types.h \
- c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\stdio.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/stdio.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stdarg.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/types.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_pthreadtypes.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/types.h \
+ /Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/stdio.h \
  ../../../../../../components/libraries/util/app_error_weak.h \
  ../../../../../../components/libraries/util/app_util.h \
  ../../../../../../components/libraries/log/nrf_log_instance.h \
@@ -73,27 +73,27 @@ _build/nrf52840_xxaa/nrf_log_backend_serial.c.o: \
  ../../../../../../components/libraries/log/src/nrf_log_internal.h \
  ../../../../../../components/libraries/log/nrf_log_types.h
 ../../../../../../components/libraries/util/sdk_common.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stdint.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\stdint.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\_default_types.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\features.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\_newlib_version.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_intsup.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_stdint.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stdbool.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\string.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\_ansi.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\newlib.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\config.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\ieeefp.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\reent.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\_ansi.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stddef.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_types.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\_types.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\lock.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\cdefs.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\string.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stdint.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/stdint.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/_default_types.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/features.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/_newlib_version.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_intsup.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_stdint.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stdbool.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/string.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/_ansi.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/newlib.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/config.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/ieeefp.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/reent.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/_ansi.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stddef.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_types.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/_types.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/lock.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/cdefs.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/string.h:
 ../config/sdk_config.h:
 ../../../../../../components/libraries/util/nordic_common.h:
 ../../../../../../modules/nrfx/mdk/compiler_abstraction.h:
@@ -119,18 +119,18 @@ c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi
 ../../../../../../components/libraries/log/src/nrf_log_backend_serial.h:
 ../../../../../../components/libraries/log/nrf_log_backend_interface.h:
 ../../../../../../components/libraries/memobj/nrf_memobj.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\stdlib.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\stdlib.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/stdlib.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/stdlib.h:
 ../../../../../../components/libraries/util/sdk_errors.h:
 ../../../../../../components/libraries/balloc/nrf_balloc.h:
 ../../../../../../components/libraries/util/app_util_platform.h:
 ../../../../../../components/libraries/util/app_error.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\stdio.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stdarg.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\types.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\_pthreadtypes.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\machine\types.h:
-c:\program\ files\ (x86)\gnu\ arm\ embedded\ toolchain\10\ 2021.10\arm-none-eabi\include\sys\stdio.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/stdio.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/lib/gcc/arm-none-eabi/10.3.1/include/stdarg.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/types.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/_pthreadtypes.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/machine/types.h:
+/Users/stefantobiasiewicz/Documents/Programing/Nordic/gcc-arm-none-eabi-10.3-2021.07/arm-none-eabi/include/sys/stdio.h:
 ../../../../../../components/libraries/util/app_error_weak.h:
 ../../../../../../components/libraries/util/app_util.h:
 ../../../../../../components/libraries/log/nrf_log_instance.h:
