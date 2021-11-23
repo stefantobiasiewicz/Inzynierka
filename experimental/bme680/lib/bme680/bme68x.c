@@ -146,6 +146,7 @@ int8_t bme68x_init(struct bme68x_dev *dev)
     int8_t rslt;
 
     rslt = bme68x_soft_reset(dev);
+    dev->delay_us(10000,NULL);
     if (rslt == BME68X_OK)
     {
         rslt = bme68x_get_regs(BME68X_REG_CHIP_ID, &dev->chip_id, 1, dev);

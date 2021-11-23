@@ -22,9 +22,8 @@
 #define TWI_INSTANCE_ID     1
 #endif
 
- /* Number of possible TWI addresses. */
- #define TWI_ADDRESSES      127
-
+#define SCL_TWI_PIN         NRF_GPIO_PIN_MAP(0,4)
+#define SDA_TWI_PIN         NRF_GPIO_PIN_MAP(0,29)
 
 /* TWI instance. */
 static const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
@@ -43,9 +42,9 @@ void twi_init (void)
     ret_code_t err_code;
     
     const nrf_drv_twi_config_t twi_config = {
-       .scl                = NRF_GPIO_PIN_MAP(0,4),
-       .sda                = NRF_GPIO_PIN_MAP(0,29),
-       .frequency          = NRF_DRV_TWI_FREQ_400K,
+       .scl                = SCL_TWI_PIN,
+       .sda                = SDA_TWI_PIN,
+       .frequency          = NRF_DRV_TWI_FREQ_100K,
        .interrupt_priority = APP_IRQ_PRIORITY_HIGH,
        .clear_bus_init     = false
     };
@@ -123,39 +122,20 @@ BME68X_INTF_RET_TYPE bme680_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32
         NRF_LOG_FLUSH();
         return BME68X_E_COM_FAIL;
     }
-    NRF_LOG_DEBUG("TWI read form regisrer %u, 0x%x, len %u", reg_addr, reg_addr, len);
-    NRF_LOG_HEXDUMP_DEBUG(reg_data,len);
-    NRF_LOG_FLUSH();
-    return BME68X_INTF_RET_SUCCESS;
-}
-
-
-BME68X_INTF_RET_TYPE bme680_i2c_write_single_register(uint8_t reg_addr, const uint8_t data, void *intf_ptr){
-    ret_code_t err_code;
-    uint8_t data_write[2];
-    uint8_t dev_addr = *(uint8_t*)intf_ptr;
-    data_write[0] = reg_addr;
-    data_write[1] = data;
-        
-    err_code = nrf_drv_twi_tx(&m_twi, dev_addr, data_write, sizeof(data_write), false);  
-    if(err_code != NRF_SUCCESS){
-        NRF_LOG_ERROR("bme680_i2c_write -> nrf_drv_twi_tx fails");
-        NRF_LOG_FLUSH();
-        return BME68X_E_COM_FAIL;
-    }
     return BME68X_INTF_RET_SUCCESS;
 }
 
 BME68X_INTF_RET_TYPE bme680_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr)
 {  
-    for(uint8_t i= 0; i< len; i++){
-        if(bme680_i2c_write_single_register(reg_addr,reg_data[i],intf_ptr) != BME68X_INTF_RET_SUCCESS) 
-            return BME68X_E_COM_FAIL;
+    ret_code_t err_code;
+    uint8_t dev_addr = *(uint8_t*)intf_ptr;
+    // tu trzeba obejść biblioteke dane juz sa odpowiednio posortowane w tablicy [addres,dane,addres++,dane++]
+    err_code = nrf_drv_twi_tx(&m_twi, dev_addr, reg_data-1, len+1, false);  
+    if(err_code != NRF_SUCCESS){
+        NRF_LOG_ERROR("bme680_i2c_write -> nrf_drv_twi_tx fails");
+        NRF_LOG_FLUSH();
+        return BME68X_E_COM_FAIL;
     }
-
-    NRF_LOG_DEBUG("TWI write to register %u, 0x%x, len %u", reg_addr, reg_addr, len);
-    NRF_LOG_HEXDUMP_DEBUG(reg_data,len);
-    NRF_LOG_FLUSH();
     return BME68X_INTF_RET_SUCCESS; 
 }
 
@@ -164,16 +144,13 @@ void bme680_wait_us (uint32_t period, void *intf_ptr)
     nrf_delay_us(period);
 }
 
-void bme680_init(){
+void bme680_init_interface(){
     bme.intf = BME68X_I2C_INTF;
     bme.intf_ptr = &addres;
     bme.read = bme680_i2c_read;
     bme.write = bme680_i2c_write;
     bme.delay_us = bme680_wait_us;
     bme.amb_temp = 25;
-    NRF_LOG_INFO("BME680 initialize stared")
-    uint8_t ret = bme68x_init(&bme);
-    bme68x_check_rslt("bme680_init", ret);
 }
 
 /**
@@ -189,13 +166,9 @@ int main(void)
     NRF_LOG_FLUSH();
     twi_init();
 
-    bme680_init();
-    nrf_delay_ms(10);
-    
-    ret = bme68x_set_op_mode(BME68X_FORCED_MODE,&bme);
-    ret = bme68x_set_op_mode(BME68X_FORCED_MODE,&bme);
-    bme68x_check_rslt("bme68x_set_op_mode", ret);
-    
+    bme680_init_interface();
+    ret = bme68x_init(&bme);
+    //bme68x_check_rslt("bme68x_set_op_mode", ret);
 
     bme_conf.filter = BME68X_FILTER_OFF;
     bme_conf.odr = BME68X_ODR_NONE;
@@ -203,40 +176,14 @@ int main(void)
     bme_conf.os_pres = BME68X_OS_1X;
     bme_conf.os_temp = BME68X_OS_2X;
     ret = bme68x_set_conf(&bme_conf, &bme);
-    bme68x_check_rslt("bme68x_set_conf", ret);
+    //bme68x_check_rslt("bme68x_set_conf", ret);
 
-   NRF_LOG_INFO("bme_conf.filter: %u\n" \
-                "cbme_confonf.odr: %u\n"\
-                "bme_conf.os_hum: %u\n" \
-                "bme_conf.os_pres: %u\n" \
-                "bme_conf.os_temp: %u\n",
-                bme_conf.filter,
-                bme_conf.odr,
-                bme_conf.os_hum,
-                bme_conf.os_pres,
-                bme_conf.os_temp)
-
-    struct bme68x_conf conf;
-    ret = bme68x_get_conf(&conf, &bme);
-    bme68x_check_rslt("bme68x_get_conf", ret);
-
-    NRF_LOG_INFO("conf.filter: %u\n" \
-                "conf.odr: %u\n"\
-                "conf.os_hum: %u\n" \
-                "conf.os_pres: %u\n" \
-                "conf.os_temp: %u",
-                conf.filter,
-                conf.odr,
-                conf.os_hum,
-                conf.os_pres,
-                conf.os_temp)
-    NRF_LOG_FLUSH();
 
     bme_heatr_conf.enable = BME68X_ENABLE;
     bme_heatr_conf.heatr_temp = 300;
     bme_heatr_conf.heatr_dur = 100;
     ret = bme68x_set_heatr_conf(BME68X_FORCED_MODE, &bme_heatr_conf, &bme);
-    bme68x_check_rslt("bme68x_set_heatr_conf", ret);
+    //bme68x_check_rslt("bme68x_set_heatr_conf", ret);
 
     NRF_LOG_INFO("Sample, TimeStamp(ms), Temperature(deg C), Pressure(Pa), Humidity(%%), Gas resistance(ohm), Status");
     NRF_LOG_FLUSH();
@@ -278,3 +225,4 @@ int main(void)
 }
 
 /** @} */
+
