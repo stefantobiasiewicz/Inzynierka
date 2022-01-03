@@ -121,6 +121,34 @@ static void log_init(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
+
+static zb_void_t contact_send_notification_req(zb_bufid_t bufid, zb_uint16_t on_off)
+{
+    zb_uint16_t addr = 0x0000;
+    zb_uint16_t cmd;
+
+    if(on_off == true){
+        cmd = ZB_ZCL_IAS_ZONE_ZONE_STATUS_ALARM1;
+    }
+    else{
+        cmd = 0;
+    }
+
+    NRF_LOG_INFO("Send NOTIFICATION command: %d", cmd);
+    ZB_ZCL_IAS_ZONE_SEND_STATUS_CHANGE_NOTIFICATION_REQ(bufid,
+                                                        addr,
+                                                        ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
+                                                        1,
+                                                        HA_CONTACT_ENDPOINT,
+                                                        ZB_AF_HA_PROFILE_ID,
+                                                        NULL,
+                                                        cmd,
+                                                        0x00,
+                                                        0x17,
+                                                        0
+                                                        );
+}
+
 /**@brief Callback for button events.
  *
  * @param[in]   evt      Incoming event from the BSP subsystem.
@@ -128,6 +156,7 @@ static void log_init(void)
 static void buttons_handler(bsp_event_t evt)
 {
     zb_ret_t zb_err_code;
+    
 
     switch(evt)
     {
@@ -146,8 +175,20 @@ static void buttons_handler(bsp_event_t evt)
             }
             break;
 
+        case BSP_EVENT_KEY_0:
+            NRF_LOG_INFO("BSP_EVENT_KEY_0 -> contact_send_close_open");
+            zb_err_code = zb_buf_get_out_delayed_ext(contact_send_notification_req,(zb_bool_t)true, 0);
+            ZB_ERROR_CHECK(zb_err_code);
+        break;
         case BSP_EVENT_KEY_1:
-            
+            NRF_LOG_INFO("BSP_EVENT_KEY_1 -> contact_send_close_open");
+            zb_err_code = zb_buf_get_out_delayed_ext(contact_send_notification_req,(zb_bool_t)false, 0);
+            ZB_ERROR_CHECK(zb_err_code);
+        break;
+
+        case BSP_EVENT_KEY_2:
+            NRF_LOG_INFO("BSP_EVENT_KEY_2 -> bdb_start_top_level_commissioning");
+            zb_bdb_reset_via_local_action(0);
         break;
 
         default:

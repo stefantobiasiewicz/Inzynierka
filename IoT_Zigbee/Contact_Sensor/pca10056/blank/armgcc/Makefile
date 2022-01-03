@@ -111,6 +111,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/log/src \
   $(SDK_ROOT)/external/zboss/addons \
   $(SDK_ROOT)/external/zboss/include/osif \
+  $(SDK_ROOT)/external/zboss/include/zcl/ \
   $(SDK_ROOT)/components/libraries/sortlist \
   $(SDK_ROOT)/external/zboss/zb_error \
   $(SDK_ROOT)/modules/nrfx/hal \
