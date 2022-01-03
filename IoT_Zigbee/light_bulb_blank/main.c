@@ -524,19 +524,22 @@ static zb_void_t zcl_device_cb(zb_bufid_t bufid)
  *
  * @param[in]   bufid   Reference to the Zigbee stack buffer used to pass signal.
  */
-void zboss_signal_handler(zb_bufid_t bufid)
-{
-    /* Update network status LED */
-    zigbee_led_status_update(bufid, ZIGBEE_NETWORK_STATE_LED);
+// void zboss_signal_handler(zb_bufid_t bufid)
+// {
 
-    /* No application-specific behavior is required. Call default signal handler. */
-    ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
+//     NRF_LOG_INFO("zboss_signal_handler id %hd", bufid);
 
-    if (bufid)
-    {
-        zb_buf_free(bufid);
-    }
-}
+//     /* Update network status LED */
+//     zigbee_led_status_update(bufid, ZIGBEE_NETWORK_STATE_LED);
+
+//     /* No application-specific behavior is required. Call default signal handler. */
+//     ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
+
+//     if (bufid)
+//     {
+//         zb_buf_free(bufid);
+//     }
+// }
 
 #if (APP_BULB_USE_WS2812_LED_CHAIN)
 static void ws2812_refresh_timer_timeout_handler(void *p_context)
