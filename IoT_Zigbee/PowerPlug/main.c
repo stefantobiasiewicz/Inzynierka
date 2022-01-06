@@ -17,52 +17,34 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+#include "nrf_drv_gpiote.h"
+#include "zb_ha_on_off_output.h"
+
 #define MAX_CHILDREN                      10                                    /**< The maximum amount of connected devices. Setting this value to 0 disables association to this device.  */
 #define IEEE_CHANNEL_MASK                 (1l << 11)                /**< Scan only one, predefined channel to find the coordinator. */
-#define HA_DIMMABLE_LIGHT_ENDPOINT        10                                    /**< Device endpoint, used to receive light controlling commands. */
+#define HA_ON_OFF_ENDPOINT                  10                                    /**< Device endpoint, used to receive light controlling commands. */
 #define ERASE_PERSISTENT_CONFIG           ZB_FALSE                              /**< Do not erase NVRAM to save the network parameters after device reboot or power-off. */
-#define BULB_PWM_NAME                     PWM1                                  /**< PWM instance used to drive dimmable light bulb. */
-#define BULB_PWM_TIMER                    2                                     /**< Timer number used by PWM. */
+
 
 /* Basic cluster attributes initial values. */
 #define BULB_INIT_BASIC_APP_VERSION       02                                    /**< Version of the application software (1 byte). */
 #define BULB_INIT_BASIC_STACK_VERSION     10                                    /**< Version of the implementation of the Zigbee stack (1 byte). */
 #define BULB_INIT_BASIC_HW_VERSION        11                                    /**< Version of the hardware of the device (1 byte). */
-#define BULB_INIT_BASIC_MANUF_NAME        "Nordic"                              /**< Manufacturer name (32 bytes). */
-#define BULB_INIT_BASIC_MODEL_ID          "Dimable_Light_v0.2"                  /**< Model number assigned by manufacturer (32-bytes long string). */
-#define BULB_INIT_BASIC_DATE_CODE         "20210416"                            /**< First 8 bytes specify the date of manufacturer of the device in ISO 8601 format (YYYYMMDD). The rest (8 bytes) are manufacturer specific. */
+#define BULB_INIT_BASIC_MANUF_NAME        "Stefan Tobiasiewicz"                              /**< Manufacturer name (32 bytes). */
+#define BULB_INIT_BASIC_MODEL_ID          "PowerPlug"                  /**< Model number assigned by manufacturer (32-bytes long string). */
+#define BULB_INIT_BASIC_DATE_CODE         "20220106"                            /**< First 8 bytes specify the date of manufacturer of the device in ISO 8601 format (YYYYMMDD). The rest (8 bytes) are manufacturer specific. */
 #define BULB_INIT_BASIC_POWER_SOURCE      ZB_ZCL_BASIC_POWER_SOURCE_DC_SOURCE   /**< Type of power sources available for the device. For possible values see section 3.2.2.2.8 of ZCL specification. */
 #define BULB_INIT_BASIC_LOCATION_DESC     "Office desk"                         /**< Describes the physical location of the device (16 bytes). May be modified during commisioning process. */
 #define BULB_INIT_BASIC_PH_ENV            ZB_ZCL_BASIC_ENV_UNSPECIFIED          /**< Describes the type of physical environment. For possible values see section 3.2.2.2.10 of ZCL specification. */
 
-#ifdef  BOARD_PCA10059                                                          /**< If it is Dongle */
-#define IDENTIFY_MODE_BSP_EVT             BSP_EVENT_KEY_0                       /**< Button event used to enter the Bulb into the Identify mode. */
-#define ZIGBEE_NETWORK_STATE_LED          BSP_BOARD_LED_0                       /**< LED indicating that light switch successfully joind Zigbee network. */
-#else
-#define IDENTIFY_MODE_BSP_EVT             BSP_EVENT_KEY_3                       /**< Button event used to enter the Bulb into the Identify mode. */
-#define ZIGBEE_NETWORK_STATE_LED          BSP_BOARD_LED_2                       /**< LED indicating that light switch successfully joind Zigbee network. */
-#endif
-#define BULB_LED                          BSP_BOARD_LED_3                       /**< LED immitaing dimmable light bulb. */
 
 
-/* Declare endpoint for Dimmable Light device with scenes. */
-#define ZB_HA_DECLARE_LIGHT_EP(ep_name, ep_id, cluster_list)                         \
-  ZB_ZCL_DECLARE_HA_DIMMABLE_LIGHT_SIMPLE_DESC(ep_name, ep_id,                       \
-    ZB_HA_DIMMABLE_LIGHT_IN_CLUSTER_NUM, ZB_HA_DIMMABLE_LIGHT_OUT_CLUSTER_NUM);      \
-  ZBOSS_DEVICE_DECLARE_REPORTING_CTX(reporting_info## device_ctx_name,               \
-                                     ZB_HA_DIMMABLE_LIGHT_REPORT_ATTR_COUNT);        \
-  ZBOSS_DEVICE_DECLARE_LEVEL_CONTROL_CTX(cvc_alarm_info## device_ctx_name,           \
-                                         ZB_HA_DIMMABLE_LIGHT_CVC_ATTR_COUNT);       \
-  ZB_AF_DECLARE_ENDPOINT_DESC(ep_name, ep_id, ZB_AF_HA_PROFILE_ID,                   \
-                              0,     \
-                              NULL,                 \
-                              ZB_ZCL_ARRAY_SIZE(cluster_list, zb_zcl_cluster_desc_t),\
-                              cluster_list,                                          \
-                              (zb_af_simple_desc_1_1_t*)&simple_desc_##ep_name,      \
-                              ZB_HA_DIMMABLE_LIGHT_REPORT_ATTR_COUNT,                \
-                              reporting_info## device_ctx_name,                      \
-                              ZB_HA_DIMMABLE_LIGHT_CVC_ATTR_COUNT,                   \
-                              cvc_alarm_info## device_ctx_name)
+
+#define RELAY_PIN NRF_GPIO_PIN_MAP(0,02)   
+#define NETWORK_LED_PIN NRF_GPIO_PIN_MAP(0,12)   
+#define BOARD_BUTTON_PIN NRF_GPIO_PIN_MAP(1,06)   
+
+
 
 #if !defined ZB_ROUTER_ROLE
 #error Define ZB_ROUTER_ROLE to compile light bulb (Router) source code.
@@ -76,15 +58,11 @@ typedef struct
     zb_zcl_scenes_attrs_t            scenes_attr;
     zb_zcl_groups_attrs_t            groups_attr;
     zb_zcl_on_off_attrs_ext_t        on_off_attr;
-    zb_zcl_level_control_attrs_t     level_control_attr;
 } bulb_device_ctx_t;
 
-
-APP_PWM_INSTANCE(BULB_PWM_NAME, BULB_PWM_TIMER);
 static bulb_device_ctx_t m_dev_ctx;
 
 ZB_ZCL_DECLARE_IDENTIFY_ATTRIB_LIST(identify_attr_list, &m_dev_ctx.identify_attr.identify_time);
-
 
 ZB_ZCL_DECLARE_GROUPS_ATTRIB_LIST(groups_attr_list, &m_dev_ctx.groups_attr.name_support);
 
@@ -108,31 +86,25 @@ ZB_ZCL_DECLARE_BASIC_ATTRIB_LIST_EXT(basic_attr_list,
                                      &m_dev_ctx.basic_attr.ph_env,
                                      m_dev_ctx.basic_attr.sw_ver);
 
-/* On/Off cluster attributes additions data */
 ZB_ZCL_DECLARE_ON_OFF_ATTRIB_LIST_EXT(on_off_attr_list,
                                       &m_dev_ctx.on_off_attr.on_off,
                                       &m_dev_ctx.on_off_attr.global_scene_ctrl,
                                       &m_dev_ctx.on_off_attr.on_time,
                                       &m_dev_ctx.on_off_attr.off_wait_time);
 
-ZB_ZCL_DECLARE_LEVEL_CONTROL_ATTRIB_LIST(level_control_attr_list,
-                                         &m_dev_ctx.level_control_attr.current_level,
-                                         &m_dev_ctx.level_control_attr.remaining_time);
-
-ZB_HA_DECLARE_DIMMABLE_LIGHT_CLUSTER_LIST(dimmable_light_clusters,
+ZB_HA_DECLARE_ON_OFF_OUTPUT_CLUSTER_LIST(power_plug_clusters,
+                                          on_off_attr_list,
                                           basic_attr_list,
                                           identify_attr_list,
                                           groups_attr_list,
-                                          scenes_attr_list,
-                                          on_off_attr_list,
-                                          level_control_attr_list);
+                                          scenes_attr_list);
 
-ZB_HA_DECLARE_LIGHT_EP(dimmable_light_ep,
-                       HA_DIMMABLE_LIGHT_ENDPOINT,
-                       dimmable_light_clusters);
+ZB_HA_DECLARE_ON_OFF_OUTPUT_EP(power_plug_ed,
+                                HA_ON_OFF_ENDPOINT,
+                                power_plug_clusters);
 
-ZB_HA_DECLARE_DIMMABLE_LIGHT_CTX(dimmable_light_ctx,
-                                 dimmable_light_ep);
+ZB_HA_DECLARE_ON_OFF_OUTPUT_CTX(power_plug_ctx,
+                                 power_plug_ed);
 
 /**@brief Function for initializing the application timer.
  */
@@ -152,73 +124,6 @@ static void log_init(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
-/**@brief Sets brightness of on-board LED
- *
- * @param[in] brightness_level Brightness level, allowed values 0 ... 255, 0 - turn off, 255 - full brightness
- */
-static void light_bulb_onboard_set_brightness(zb_uint8_t brightness_level)
-{
-    app_pwm_duty_t app_pwm_duty;
-
-    /* Scale level value: APP_PWM uses 0-100 scale, but Zigbee level control cluster uses values from 0 up to 255. */
-    app_pwm_duty = (brightness_level * 100U) / 255U;
-
-    /* Set the duty cycle - keep trying until PWM is ready. */
-    while (app_pwm_channel_duty_set(&BULB_PWM_NAME, 0, app_pwm_duty) == NRF_ERROR_BUSY)
-    {
-    }
-}
-
-/**@brief Sets brightness of bulb luminous executive element
- *
- * @param[in] brightness_level Brightness level, allowed values 0 ... 255, 0 - turn off, 255 - full brightness
- */
-static void light_bulb_set_brightness(zb_uint8_t brightness_level)
-{
-    light_bulb_onboard_set_brightness(brightness_level);
-}
-
-/**@brief Function for setting the light bulb brightness.
-  *
-  * @param[in]   new_level   Light bulb brightness value.
- */
-static void level_control_set_value(zb_uint16_t new_level)
-{
-    NRF_LOG_INFO("Set level value: %i", new_level);
-
-    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT,                                       
-                         ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL,            
-                         ZB_ZCL_CLUSTER_SERVER_ROLE,                 
-                         ZB_ZCL_ATTR_LEVEL_CONTROL_CURRENT_LEVEL_ID, 
-                         (zb_uint8_t *)&new_level,                                       
-                         ZB_FALSE);                                  
-
-    /* According to the table 7.3 of Home Automation Profile Specification v 1.2 rev 29, chapter 7.1.3. */
-    if (new_level == 0)
-    {
-        zb_uint8_t value = ZB_FALSE;
-        ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
-                             ZB_ZCL_CLUSTER_ID_ON_OFF,    
-                             ZB_ZCL_CLUSTER_SERVER_ROLE,  
-                             ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
-                             &value,                        
-                             ZB_FALSE);                   
-    }
-    else
-    {
-        zb_uint8_t value = ZB_TRUE;
-        ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
-                             ZB_ZCL_CLUSTER_ID_ON_OFF,    
-                             ZB_ZCL_CLUSTER_SERVER_ROLE,  
-                             ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
-                             &value,                        
-                             ZB_FALSE);
-    }
-
-    light_bulb_set_brightness(new_level);
-}
-
-
 /**@brief Function for turning ON/OFF the light bulb.
  *
  * @param[in]   on   Boolean light bulb state.
@@ -227,75 +132,34 @@ static void on_off_set_value(zb_bool_t on)
 {
     NRF_LOG_INFO("Set ON/OFF value: %i", on);
 
-    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
+    ZB_ZCL_SET_ATTRIBUTE(HA_ON_OFF_ENDPOINT, 
                          ZB_ZCL_CLUSTER_ID_ON_OFF,    
                          ZB_ZCL_CLUSTER_SERVER_ROLE,  
                          ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
                          (zb_uint8_t *)&on,                        
                          ZB_FALSE);
 
+    m_dev_ctx.on_off_attr.on_off = on;
+
     if (on)
     {
-        level_control_set_value(m_dev_ctx.level_control_attr.current_level);
+        nrf_drv_gpiote_out_set(RELAY_PIN);
     }
     else
     {
-        light_bulb_set_brightness(0U);
+        nrf_drv_gpiote_out_clear(RELAY_PIN);
     }
+    zb_nvram_write_dataset(ZB_NVRAM_HA_DATA);
 }
 
-/**@brief Callback for button events.
- *
- * @param[in]   evt      Incoming event from the BSP subsystem.
- */
-static void buttons_handler(bsp_event_t evt)
-{
-    zb_ret_t zb_err_code;
-
-    switch(evt)
+static void on_off_set_on_start_value(){
+    if (m_dev_ctx.on_off_attr.on_off)
     {
-        case IDENTIFY_MODE_BSP_EVT:
-            /* Check if endpoint is in identifying mode, if not put desired endpoint in identifying mode. */
-            if (m_dev_ctx.identify_attr.identify_time == ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE)
-            {
-                NRF_LOG_INFO("Bulb put in identifying mode");
-                zb_err_code = zb_bdb_finding_binding_target(HA_DIMMABLE_LIGHT_ENDPOINT);
-                ZB_ERROR_CHECK(zb_err_code);
-            }
-            else
-            {
-                NRF_LOG_INFO("Cancel F&B target procedure");
-                zb_bdb_finding_binding_target_cancel();
-            }
-            break;
-
-        default:
-            NRF_LOG_INFO("Unhandled BSP Event received: %d", evt);
-            break;
+        nrf_drv_gpiote_out_set(RELAY_PIN);
     }
-}
-
-
-/**@brief Function for initializing LEDs and a single PWM channel.
- */
-static void leds_buttons_init(void)
-{
-    ret_code_t       err_code;
-    app_pwm_config_t pwm_cfg = APP_PWM_DEFAULT_CONFIG_1CH(5000L, bsp_board_led_idx_to_pin(BULB_LED));
-
-    /* Initialize all LEDs and buttons. */
-    err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, buttons_handler);
-    APP_ERROR_CHECK(err_code);
-    /* By default the bsp_init attaches BSP_KEY_EVENTS_{0-4} to the PUSH events of the corresponding buttons. */
-
-    /* Initialize PWM running on timer 1 in order to control dimmable light bulb. */
-    err_code = app_pwm_init(&BULB_PWM_NAME, &pwm_cfg, NULL);
-    APP_ERROR_CHECK(err_code);
-
-    app_pwm_enable(&BULB_PWM_NAME);
-
-    while (app_pwm_channel_duty_set(&BULB_PWM_NAME, 0, 99) == NRF_ERROR_BUSY)
+    else
     {
+        nrf_drv_gpiote_out_clear(RELAY_PIN);
     }
 }
 
@@ -339,25 +203,16 @@ static void bulb_clusters_attr_init(void)
     /* Identify cluster attributes data */
     m_dev_ctx.identify_attr.identify_time = ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE;
 
-    /* On/Off cluster attributes data */
-    m_dev_ctx.on_off_attr.on_off = (zb_bool_t)ZB_ZCL_ON_OFF_IS_ON;
+    // /* On/Off cluster attributes data */
+    // m_dev_ctx.on_off_attr.on_off = (zb_bool_t)ZB_ZCL_ON_OFF_IS_ON;
 
-    m_dev_ctx.level_control_attr.current_level  = ZB_ZCL_LEVEL_CONTROL_LEVEL_MAX_VALUE;
-    m_dev_ctx.level_control_attr.remaining_time = ZB_ZCL_LEVEL_CONTROL_REMAINING_TIME_DEFAULT_VALUE;
-
-    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT, 
+    ZB_ZCL_SET_ATTRIBUTE(HA_ON_OFF_ENDPOINT, 
                          ZB_ZCL_CLUSTER_ID_ON_OFF,    
                          ZB_ZCL_CLUSTER_SERVER_ROLE,  
                          ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID,
                          (zb_uint8_t *)&m_dev_ctx.on_off_attr.on_off,                        
                          ZB_FALSE);                   
-
-    ZB_ZCL_SET_ATTRIBUTE(HA_DIMMABLE_LIGHT_ENDPOINT,                                       
-                         ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL,            
-                         ZB_ZCL_CLUSTER_SERVER_ROLE,                 
-                         ZB_ZCL_ATTR_LEVEL_CONTROL_CURRENT_LEVEL_ID, 
-                         (zb_uint8_t *)&m_dev_ctx.level_control_attr.current_level,                                       
-                         ZB_FALSE);                                  
+                               
 }
 
 /**@brief Function which tries to sleep down the MCU 
@@ -388,10 +243,6 @@ static zb_void_t zcl_device_cb(zb_bufid_t bufid)
 
     switch (p_device_cb_param->device_cb_id)
     {
-        case ZB_ZCL_LEVEL_CONTROL_SET_VALUE_CB_ID:
-            NRF_LOG_INFO("Level control setting to %d", p_device_cb_param->cb_param.level_control_set_value_param.new_value);
-            level_control_set_value(p_device_cb_param->cb_param.level_control_set_value_param.new_value);
-            break;
 
         case ZB_ZCL_SET_ATTR_VALUE_CB_ID:
             cluster_id = p_device_cb_param->cb_param.set_attr_value_param.cluster_id;
@@ -407,21 +258,6 @@ static zb_void_t zcl_device_cb(zb_bufid_t bufid)
                     on_off_set_value((zb_bool_t) value);
                 }
             }
-            else if (cluster_id == ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL)
-            {
-                uint16_t value = p_device_cb_param->cb_param.set_attr_value_param.values.data16;
-
-                NRF_LOG_INFO("level control attribute setting to %hd", value);
-                if (attr_id == ZB_ZCL_ATTR_LEVEL_CONTROL_CURRENT_LEVEL_ID)
-                {
-                    level_control_set_value(value);
-                }
-            }
-            else
-            {
-                /* Other clusters can be processed here */
-                NRF_LOG_INFO("Unhandled cluster attribute id: %d", cluster_id);
-            }
             break;
 
         default:
@@ -430,6 +266,38 @@ static zb_void_t zcl_device_cb(zb_bufid_t bufid)
     }
 
     NRF_LOG_INFO("zcl_device_cb status: %hd", p_device_cb_param->status);
+}
+
+void zigbee_status_led_update(zb_bufid_t bufid)
+{
+    zb_zdo_app_signal_hdr_t  * p_sg_p = NULL;
+    zb_zdo_app_signal_type_t   sig    = zb_get_app_signal(bufid, &p_sg_p);
+    zb_ret_t                   status = ZB_GET_APP_SIGNAL_STATUS(bufid);
+
+    switch (sig)
+    {
+        case ZB_BDB_SIGNAL_DEVICE_REBOOT:
+            /* fall-through */
+        case ZB_BDB_SIGNAL_STEERING:
+            if (status == RET_OK)
+            {
+                nrf_drv_gpiote_out_clear(NETWORK_LED_PIN);
+            }
+            else
+            {
+                nrf_drv_gpiote_out_set(NETWORK_LED_PIN);
+            }
+            break;
+
+        case ZB_ZDO_SIGNAL_LEAVE:
+            /* Update network status LED */
+            nrf_drv_gpiote_out_set(NETWORK_LED_PIN);
+            break;
+
+        default:
+            break;
+    }
+    NRF_LOG_INFO("Network led state update");
 }
 
 /**@brief Zigbee stack event handler.
@@ -441,7 +309,7 @@ void zboss_signal_handler(zb_bufid_t bufid)
     NRF_LOG_INFO("zboss_signal_handler id %hd", bufid);
 
     /* Update network status LED */
-    zigbee_led_status_update(bufid, ZIGBEE_NETWORK_STATE_LED);
+    zigbee_status_led_update(bufid);
 
     /* No application-specific behavior is required. Call default signal handler. */
     ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
@@ -452,6 +320,53 @@ void zboss_signal_handler(zb_bufid_t bufid)
     }
 }
 
+static void gpio_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
+
+    switch (pin)
+    {
+    case BOARD_BUTTON_PIN:
+        if(action == NRF_GPIOTE_POLARITY_HITOLO){
+            NRF_LOG_INFO("Button press");
+            zb_bdb_reset_via_local_action(0);
+        }
+        break;
+    default:
+        NRF_LOG_WARNING("Unknown gpio event pin: %d, action %d", pin, action);
+        break;
+    }
+}
+
+static void gpio_init(void)
+{
+    ret_code_t err_code;
+
+    // inicjalizacja modułu GPIOTE
+    err_code = nrf_drv_gpiote_init();
+    APP_ERROR_CHECK(err_code);
+
+    // struktura konfiguracyjna wyjściue - przekaźnik
+    nrf_drv_gpiote_out_config_t relay_out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+    // inicjalizacja wyjscia
+    err_code = nrf_drv_gpiote_out_init(RELAY_PIN, &relay_out_config);
+    APP_ERROR_CHECK(err_code);
+
+    // struktura konfiguracyjna wyjściue - dioda led
+    nrf_drv_gpiote_out_config_t led_out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+    // inicjalizacja wyjscia
+    err_code = nrf_drv_gpiote_out_init(NETWORK_LED_PIN, &led_out_config);
+    APP_ERROR_CHECK(err_code);
+
+
+   // struktura konfiguracyjna wejście - przycisk
+    nrf_drv_gpiote_in_config_t button_in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
+    button_in_config.pull = NRF_GPIO_PIN_PULLUP;
+    // inicjalizacja wyścia
+    err_code = nrf_drv_gpiote_in_init(BOARD_BUTTON_PIN, &button_in_config, gpio_handler);
+    APP_ERROR_CHECK(err_code);
+    // właczenie mechanizmu eventow przychodzących od pinu
+    nrf_drv_gpiote_in_event_enable(BOARD_BUTTON_PIN, true);
+
+}
 
 /**@brief Function for application main entry.
  */
@@ -463,8 +378,9 @@ int main(void)
     /* Initialize timer, logging system and GPIOs. */
     timer_init();
     log_init();
-    leds_buttons_init();
-
+    
+    gpio_init();
+    
 
     /* Set Zigbee stack logging level and traffic dump subsystem. */
     ZB_SET_TRACE_LEVEL(ZIGBEE_TRACE_LEVEL);
@@ -491,14 +407,15 @@ int main(void)
     ZB_ZCL_REGISTER_DEVICE_CB(zcl_device_cb);
 
     /* Register dimmer switch device context (endpoints). */
-    ZB_AF_REGISTER_DEVICE_CTX(&dimmable_light_ctx);
+    ZB_AF_REGISTER_DEVICE_CTX(&power_plug_ctx);
 
     bulb_clusters_attr_init();
-    level_control_set_value(m_dev_ctx.level_control_attr.current_level);
 
     /** Start Zigbee Stack. */
     zb_err_code = zboss_start_no_autostart();
     ZB_ERROR_CHECK(zb_err_code);
+
+    on_off_set_on_start_value();
 
     while(1)
     {

@@ -46,6 +46,8 @@
 #define KONTACTOR_PIN  NRF_GPIO_PIN_MAP(0,24)
 
 
+// TODO ZB_BDB_SIGNAL_DEVICE_FIRST_START -> DEFAULT_ZBOSS_HANDLER ZOBACZ TAM !!! JEST TAM IMPLEMENTACJA REJOINU
+// SPRAWDZIC TA FUNKCJE Z LOW POWER.
 
 
 /* Main application customizable context. Stores all settings and static values. */
@@ -249,54 +251,6 @@ zb_void_t zb_osif_go_idle(zb_void_t)
     zb_osif_wait_for_event();
 }
 
-/**@brief Callback function for handling ZCL commands.
- *
- * @param[in]   bufid   Reference to Zigbee stack buffer used to pass received data.
- */
-static zb_void_t zcl_device_cb(zb_bufid_t bufid)
-{
-    //zb_uint8_t                       cluster_id;
-    //zb_uint8_t                       attr_id;
-    zb_zcl_device_callback_param_t * p_device_cb_param = ZB_BUF_GET_PARAM(bufid, zb_zcl_device_callback_param_t);
-
-    NRF_LOG_INFO("zcl_device_cb id %hd", p_device_cb_param->device_cb_id);
-
-    /* Set default response value. */
-    p_device_cb_param->status = RET_OK;
-
-    switch (p_device_cb_param->device_cb_id)
-    {
-        case ZB_ZCL_CMD_WRITE_ATTRIB:
-            NRF_LOG_INFO("ZB_ZCL_CMD_WRITE_ATTRIB");
-            break;
-
-        default:
-            p_device_cb_param->status = RET_ERROR;
-            break;
-    }
-
-    NRF_LOG_INFO("zcl_device_cb status: %hd", p_device_cb_param->status);
-}
-
-/**@brief Zigbee stack event handler.
- *
- * @param[in]   bufid   Reference to the Zigbee stack buffer used to pass signal.
- */
-void zboss_signal_handler(zb_bufid_t bufid)
-{
-    /* Update network status LED */
-    zigbee_led_status_update(bufid, ZIGBEE_NETWORK_STATE_LED);
-
-    /* No application-specific behavior is required. Call default signal handler. */
-    ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
-
-    if (bufid)
-    {
-        zb_buf_free(bufid);
-    }
-}
-
-
 static zb_void_t contact_send_notification_req(zb_bufid_t bufid, zb_uint16_t on_off)
 {
     zb_uint16_t cmd;
@@ -354,8 +308,6 @@ static void izs_send_enroll_req(zb_bufid_t bufid){
         0);
 
 }
-
-
 
 static void gpio_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
 
@@ -537,6 +489,88 @@ zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
   NRF_LOG_INFO("<< izs_zcl_cmd_handler processed %hd", cmd_processed);
   return cmd_processed;
 }
+
+void zigbee_status_led_update(zb_bufid_t bufid)
+{
+    zb_zdo_app_signal_hdr_t  * p_sg_p = NULL;
+    zb_zdo_app_signal_type_t   sig    = zb_get_app_signal(bufid, &p_sg_p);
+    zb_ret_t                   status = ZB_GET_APP_SIGNAL_STATUS(bufid);
+
+    switch (sig)
+    {
+        case ZB_BDB_SIGNAL_DEVICE_REBOOT:
+            /* fall-through */
+        case ZB_BDB_SIGNAL_STEERING:
+            if (status == RET_OK)
+            {
+                nrf_drv_gpiote_out_clear(NETWORK_LED_PIN);
+            }
+            else
+            {
+                nrf_drv_gpiote_out_set(NETWORK_LED_PIN);
+            }
+            break;
+
+        case ZB_ZDO_SIGNAL_LEAVE:
+            /* Update network status LED */
+            nrf_drv_gpiote_out_set(NETWORK_LED_PIN);
+            break;
+
+        default:
+            break;
+    }
+    NRF_LOG_INFO("Network led state update");
+}
+
+
+/**@brief Callback function for handling ZCL commands.
+ *
+ * @param[in]   bufid   Reference to Zigbee stack buffer used to pass received data.
+ */
+static zb_void_t zcl_device_cb(zb_bufid_t bufid)
+{
+    //zb_uint8_t                       cluster_id;
+    //zb_uint8_t                       attr_id;
+    zb_zcl_device_callback_param_t * p_device_cb_param = ZB_BUF_GET_PARAM(bufid, zb_zcl_device_callback_param_t);
+
+    NRF_LOG_INFO("zcl_device_cb id %hd", p_device_cb_param->device_cb_id);
+
+    /* Set default response value. */
+    p_device_cb_param->status = RET_OK;
+
+    switch (p_device_cb_param->device_cb_id)
+    {
+        case ZB_ZCL_CMD_WRITE_ATTRIB:
+            NRF_LOG_INFO("ZB_ZCL_CMD_WRITE_ATTRIB");
+            break;
+
+        default:
+            p_device_cb_param->status = RET_ERROR;
+            break;
+    }
+
+    NRF_LOG_INFO("zcl_device_cb status: %hd", p_device_cb_param->status);
+}
+
+/**@brief Zigbee stack event handler.
+ *
+ * @param[in]   bufid   Reference to the Zigbee stack buffer used to pass signal.
+ */
+void zboss_signal_handler(zb_bufid_t bufid)
+{
+    /* Update network status LED */
+    zigbee_led_status_update(bufid, ZIGBEE_NETWORK_STATE_LED);
+
+    /* No application-specific behavior is required. Call default signal handler. */
+    ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
+
+    if (bufid)
+    {
+        zb_buf_free(bufid);
+    }
+}
+
+
 
 /**@brief Function for application main entry.
  */
