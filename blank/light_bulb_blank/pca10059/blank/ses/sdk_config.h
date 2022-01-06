@@ -115,7 +115,7 @@
 // <i> 802.15.4 channel used by Zigbee. Defaults to 16.
 
 #ifndef ZIGBEE_CHANNEL
-#define ZIGBEE_CHANNEL 11
+#define ZIGBEE_CHANNEL 16
 #endif
 
 // <o> ZIGBEE_TRACE_LEVEL - Trace level of Zigbee stack logs.  <0-4> 
@@ -1944,7 +1944,7 @@
 #endif
 // <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin 
 #ifndef NRF_LOG_BACKEND_UART_TX_PIN
-#define NRF_LOG_BACKEND_UART_TX_PIN 22
+#define NRF_LOG_BACKEND_UART_TX_PIN 31
 #endif
 
 // <o> NRF_LOG_BACKEND_UART_BAUDRATE  - Default Baudrate
@@ -1967,7 +1967,7 @@
 // <268435456=> 1000000 baud 
 
 #ifndef NRF_LOG_BACKEND_UART_BAUDRATE
-#define NRF_LOG_BACKEND_UART_BAUDRATE 30801920
+#define NRF_LOG_BACKEND_UART_BAUDRATE 268435456
 #endif
 
 // <o> NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings. 

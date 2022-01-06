@@ -133,28 +133,39 @@ typedef struct {
     zb_uint16_t zone_type;  
     zb_uint16_t zone_status; 
     zb_uint64_t ias_cie_address; 
+    zb_uint8_t  zone_id;
+    zb_uint8_t  number_of_zone_sens_levels_supported;
+    zb_uint8_t  current_zone_sens_level;
     zb_uint16_t cie_short_addr; 
     zb_uint8_t  cie_ep;
 } ias_zone_attr_t;
 
+
 //ias_zone_attr_t ias_zone_attr;
 
 
-/** @brief Declare attribute list for IAS Zone cluster - server side
+/** @brief Declare attribute list for IAS Zone cluster - server side (extended attribute set)
     @param attr_list - attribute list name
     @param zone_state - pointer to variable to store ZoneState attribute
     @param zone_type - pointer to variable to store ZoneType attribute
     @param zone_status - pointer to variable to store ZoneStatus attribute
     @param ias_cie_address - pointer to variable to store IAS-CIE address attribute
+    @param zone_id - pointer to variable to store Zone ID attribute
+    @param number_of_zone_sens_levels_supported - pointer to variable to store
+    NumberOfZoneSensitivityLevelsSupported attribute
+    @param current_zone_sens_level - pointer to variable to store CurrentZoneSensitivityLevel attribute
     @param cie_short_addr - custom attribute to store CIE short address
     @param cie_ep - custom attribute to store CIE Endpoint number
 */
 /*
-ZB_ZCL_DECLARE_IAS_ZONE_ATTRIB_LIST(ias_zone_attr_list,
+ZB_ZCL_DECLARE_IAS_ZONE_ATTRIB_LIST_EXT(ias_zone_attr_list,
                                     &ias_zone_attr.zone_state,
                                     &ias_zone_attr.zone_type,
                                     &ias_zone_attr.zone_status,
+                                    &ias_zone_attr.number_of_zone_sens_levels_supported,
+                                    &ias_zone_attr.current_zone_sens_level,
                                     &ias_zone_attr.ias_cie_address,
+                                    &ias_zone_attr.zone_id,
                                     &ias_zone_attr.cie_short_addr,
                                     &ias_zone_attr.cie_ep
                                     );
