@@ -8,10 +8,10 @@
 #define HA_CONTACT_ENDPOINT        1
 
 /** Input clusters number. */
-#define ZB_HA_CONTACT_IN_CLUSTER_NUM  3
+#define ZB_HA_CONTACT_IN_CLUSTER_NUM  4
 
 /** Output clusters number. */
-#define ZB_HA_CONTACT_OUT_CLUSTER_NUM 1
+#define ZB_HA_CONTACT_OUT_CLUSTER_NUM 0
 
 /*! @internal Number of attribute for reporting on Contact */
 #define ZB_HA_CONTACT_REPORT_ATTR_COUNT \
@@ -173,33 +173,35 @@ ZB_ZCL_DECLARE_IAS_ZONE_ATTRIB_LIST_EXT(ias_zone_attr_list,
 
 typedef struct
 {
-    zb_uint16_t voltage;  
-    zb_uint8_t frequency;
+    zb_uint8_t voltage;  
+    zb_uint8_t size;
+    zb_uint8_t quantity;
+    zb_uint8_t rated_voltage;
     zb_uint8_t alarm_mask;
-    zb_uint16_t voltage_min_threshold;
-    zb_uint16_t voltage_max_threshold;
-    zb_uint16_t dwell_trip_point;
+    zb_uint8_t voltage_min_threshold;
 } power_config_attr_t;
 
 //power_config_attr_t power_config_attr;
 
 /** @brief Declare attribute list for Power Configuration cluster - server side
-    @param attr_list - attribure list name
-    @param voltage - pointer to variable to store MainsVoltage attribute
-    @param frequency - pointer to variable to store MainsFrequency attribute
+    @param attr_list - attribute list name
+    @param voltage - pointer to variable to store BatteryVoltage attribute
+    @param size - pointer to variable to store BatterySize attribute
+    @param quantity - pointer to variable to store BatteryQuantity attribute
+    @param rated_voltage - pointer to variable to store BatteryRatedVoltage attribute
     @param alarm_mask - pointer to variable to store BatteryAlarmMask attribute
-    @param voltage_min_threshold - pointer to variable to store MainsVoltageMinThreshold attribute
-    @param voltage_max_threshold - pointer to variable to store MainsVoltageMaxThreshold attribute
-    @param dwell_trip_point - pointer to variable to store MainsVoltageDwellTripPoint attribute
-*/
-/*
-ZB_ZCL_DECLARE_POWER_CONFIG_MAINS_ATTRIB_LIST(power_config_attr_list,
-                                             &power_config_attr.voltage,
-                                             &power_config_attr.frequency,
-                                             &power_config_attr.alarm_mask,
-                                             &power_config_attr.voltage_min_threshold,
-                                             &power_config_attr.voltage_max_threshold,
-                                             &power_config_attr.dwell_trip_point);
+    @param voltage_min_threshold - pointer to variable to store BatteryVoltageMinThreshold attribute
+
+#define ZB_ZCL_DECLARE_POWER_CONFIG_ATTRIB_LIST(attr_list,                                  \
+    voltage, size, quantity, rated_voltage, alarm_mask, voltage_min_threshold)              \
+  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                               \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID, (voltage))              \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_SIZE_ID, (size))                    \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_QUANTITY_ID, (quantity))            \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_RATED_VOLTAGE_ID, (rated_voltage))  \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_ALARM_MASK_ID, (alarm_mask ))       \
+  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_MIN_THRESHOLD_ID, (voltage_min_threshold))  \
+  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
 
 */
 
