@@ -238,6 +238,7 @@ static zb_void_t contact_send_notification_req(zb_bufid_t bufid, zb_uint16_t on_
 
     NRF_LOG_INFO("Send NOTIFICATION command: %d cie_short_addr = 0x%x, cie_ep = 0x%x ", cmd,
                           m_dev_ctx.ias_zone_attr.cie_short_addr, m_dev_ctx.ias_zone_attr.cie_ep);
+    // todo -> właczyć diode i w callbackuy zgasic
     ZB_ZCL_IAS_ZONE_SEND_STATUS_CHANGE_NOTIFICATION_REQ(bufid,
                                                         m_dev_ctx.ias_zone_attr.cie_short_addr,
                                                         ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
