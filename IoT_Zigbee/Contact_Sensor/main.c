@@ -21,6 +21,7 @@
 #include "Contact.h"
 #include "device_factory_settings.h"
 
+#include "nrf_drv_saadc.h"
 #include "nrf_drv_gpiote.h"
 
 #define MAX_CHILDREN                      10                                    /**< The maximum amount of connected devices. Setting this value to 0 disables association to this device.  */
@@ -47,6 +48,10 @@
 #define BOARD_BUTTON_PIN  NRF_GPIO_PIN_MAP(0,02)
 #define KONTACTOR_PIN  NRF_GPIO_PIN_MAP(0,24)
 
+
+#define SAADC_SAMPLES_IN_BUFFER 1                 //Number of SAADC samples in RAM before returning a SAADC event. For low power SAADC set this constant to 1. Otherwise the EasyDMA will be enabled for an extended time which consumes high current.
+
+// static nrf_saadc_value_t       m_buffer_pool[2][SAADC_SAMPLES_IN_BUFFER];
 
 // TODO ZB_BDB_SIGNAL_DEVICE_FIRST_START -> DEFAULT_ZBOSS_HANDLER ZOBACZ TAM !!! JEST TAM IMPLEMENTACJA REJOINU
 
@@ -139,6 +144,30 @@ static void log_init(void)
 
 /**@brief Function for initializing all clusters attributes.
  */
+
+void saadc_init(void)
+{
+    ret_code_t err_code;                          
+
+    err_code = nrf_drv_saadc_init(NULL, NULL);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_saadc_channel_config_t channel_config;                                                   
+        channel_config.resistor_p = NRF_SAADC_RESISTOR_DISABLED;     
+        channel_config.resistor_n = NRF_SAADC_RESISTOR_DISABLED;      
+        channel_config.gain       = NRF_SAADC_GAIN1_6;                
+        channel_config.reference  = NRF_SAADC_REFERENCE_INTERNAL;     
+        channel_config.acq_time   = NRF_SAADC_ACQTIME_10US;          
+        channel_config.mode       = NRF_SAADC_MODE_SINGLE_ENDED;      
+        channel_config.burst      = NRF_SAADC_BURST_DISABLED;         
+        channel_config.pin_p      = NRF_SAADC_INPUT_VDD;  
+        channel_config.pin_n      = NRF_SAADC_INPUT_DISABLED;          
+    
+
+    err_code = nrf_drv_saadc_channel_init(0, &channel_config);
+    APP_ERROR_CHECK(err_code);
+}
+
 static void contact_sensor_clusters_attr_init(void)
 {
 
@@ -214,17 +243,6 @@ static void contact_sensor_clusters_attr_init(void)
                            
 }
 
-/**@brief Function which tries to sleep down the MCU 
- *
- * Function which sleeps the MCU on the non-sleepy End Devices to optimize the power saving.
- * The weak definition inside the OSIF layer provides some minimal working template
- */
-zb_void_t zb_osif_go_idle(zb_void_t)
-{
-    //TODO: implement your own logic if needed
-    zb_osif_wait_for_event();
-}
-
 static zb_void_t contact_send_notification_req(zb_bufid_t bufid, zb_uint16_t on_off)
 {
     zb_uint16_t cmd;
@@ -253,11 +271,30 @@ static zb_void_t contact_send_notification_req(zb_bufid_t bufid, zb_uint16_t on_
     );
 }
 
+/**
+ *  @return battery voltage in mV 
+ */
+static void battery_measure(zb_uint8_t *battery, zb_uint8_t *percent){
+    saadc_init();
+
+    nrf_saadc_value_t new_voltage_value;
+    nrfx_saadc_sample_convert(0, &new_voltage_value);
+    NRF_LOG_INFO("nrfx_saadc_sample_convert: %d", new_voltage_value);
+    nrf_drv_saadc_uninit();
+
+    *battery = (zb_uint8_t) (new_voltage_value * 0.0351); //3.6 / 1024 * 10
+    *percent = (zb_uint8_t) (new_voltage_value * 0.00351 * 66.666); // 3.6 / 1024 * 0.015
+}
+
 static void check_contact(){
     zb_ret_t zb_err_code;
     zb_bool_t cmd = false;
 
-    m_dev_ctx.power_config_attr.battery_percentage_remaining--;
+    battery_measure(&m_dev_ctx.power_config_attr.voltage, &m_dev_ctx.power_config_attr.battery_percentage_remaining);
+
+    NRF_LOG_INFO("voltage: %d", m_dev_ctx.power_config_attr.voltage);
+    NRF_LOG_INFO("battery_percentage_remaining: %d", m_dev_ctx.power_config_attr.battery_percentage_remaining);
+
     zb_uint8_t percent =  m_dev_ctx.power_config_attr.battery_percentage_remaining;
     zb_zcl_status_t zcl_status;
     zcl_status = zb_zcl_set_attr_val(HA_CONTACT_ENDPOINT, 
@@ -501,6 +538,7 @@ static void gpio_init(void)
     nrf_drv_gpiote_in_event_enable(KONTACTOR_PIN, true);
 }
 
+
 /**@brief Function for application main entry.
  */
 int main(void)
@@ -514,7 +552,6 @@ int main(void)
 
 
     gpio_init();
-
 
     /* Set Zigbee stack logging level and traffic dump subsystem. */
     ZB_SET_TRACE_LEVEL(ZIGBEE_TRACE_LEVEL);
