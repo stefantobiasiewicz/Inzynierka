@@ -3,7 +3,7 @@
 #include "sdk_config.h"
 #include "zboss_api.h"
 #include "zboss_api_addons.h"
-#include "zb_mem_config_med.h"
+#include "zb_mem_config_max.h"
 #include "zb_ha_dimmable_light.h"
 #include "zb_error_handler.h"
 #include "zb_nrf52_internal.h"
@@ -25,7 +25,6 @@
 
 #define MAX_CHILDREN                      10                                    /**< The maximum amount of connected devices. Setting this value to 0 disables association to this device.  */
 #define IEEE_CHANNEL_MASK                 (1l << 11)                            /**< Scan only one, predefined channel to find the coordinator. value for all chanel -> 0x07fff800U*/
-#define HA_DIMMABLE_LIGHT_ENDPOINT        10                                    /**< Device endpoint, used to receive light controlling commands. */
 #define ERASE_PERSISTENT_CONFIG           ZB_FALSE                             /**< Do not erase NVRAM to save the network parameters after device reboot or power-off. */
 
 #define MATCH_DESC_REQ_ROLE                 ZB_NWK_BROADCAST_RX_ON_WHEN_IDLE    /**< Find only non-sleepy device. */
@@ -40,7 +39,9 @@
 #endif
 #define BULB_LED                          BSP_BOARD_LED_3                       /**< LED immitaing dimmable light bulb. */
 
-
+#ifndef ZB_ED_ROLE
+#define ZB_ED_ROLE
+#endif
 
 #define BOARD_LED_PIN NRF_GPIO_PIN_MAP(0,13)  
 #define BOARD_BUTTON_PIN  NRF_GPIO_PIN_MAP(0,02)
@@ -91,13 +92,14 @@ ZB_ZCL_DECLARE_IAS_ZONE_ATTRIB_LIST_EXT(ias_zone_attr_list,
                                     &m_dev_ctx.ias_zone_attr.cie_ep
                                     );
 
-ZB_ZCL_DECLARE_POWER_CONFIG_ATTRIB_LIST(power_config_attr_list,
+ZB_ZCL_DECLARE_POWER_CONFIG_ATTRIB_LIST_EXTEND_WITH_PERCENTAGE(power_config_attr_list,
                                              &m_dev_ctx.power_config_attr.voltage,
                                              &m_dev_ctx.power_config_attr.size,
                                              &m_dev_ctx.power_config_attr.quantity,
                                              &m_dev_ctx.power_config_attr.rated_voltage,
                                              &m_dev_ctx.power_config_attr.alarm_mask,
-                                             &m_dev_ctx.power_config_attr.voltage_min_threshold);
+                                             &m_dev_ctx.power_config_attr.voltage_min_threshold,
+                                             &m_dev_ctx.power_config_attr.battery_percentage_remaining);
 
 ZB_HA_CONTACT_CLUSTER_LIST(contact_cluster_list,
                             basic_attr_list,
@@ -137,8 +139,9 @@ static void log_init(void)
 
 /**@brief Function for initializing all clusters attributes.
  */
-static void bulb_clusters_attr_init(void)
+static void contact_sensor_clusters_attr_init(void)
 {
+
     /* Basic cluster attributes data */
     m_dev_ctx.basic_attr.zcl_version   = ZB_ZCL_VERSION;
     m_dev_ctx.basic_attr.app_version   = CONTACT_INIT_BASIC_APP_VERSION;
@@ -174,27 +177,40 @@ static void bulb_clusters_attr_init(void)
 
     /* Identify cluster attributes data */
     m_dev_ctx.identify_attr.identify_time = ZB_ZCL_IDENTIFY_IDENTIFY_TIME_DEFAULT_VALUE;
-
+    
 
     m_dev_ctx.ias_zone_attr.zone_state = ZB_ZCL_IAS_ZONE_ZONESTATE_NOT_ENROLLED;
+    m_dev_ctx.ias_zone_attr.zone_type = ZB_ZCL_IAS_ZONE_ZONETYPE_CONTACT_SWITCH;
+    m_dev_ctx.ias_zone_attr.zone_status = ZB_ZCL_IAS_ZONE_ZONE_STATUS_DEF_VALUE;
+    m_dev_ctx.ias_zone_attr.ias_cie_address = 0x0000000000000000;
+    m_dev_ctx.ias_zone_attr.zone_id = ZB_ZCL_IAS_ZONEID_ID_DEF_VALUE;
+    m_dev_ctx.ias_zone_attr.number_of_zone_sens_levels_supported = ZB_ZCL_IAS_ZONE_NUMBER_OF_ZONE_SENSITIVITY_LEVELS_SUPPORTED_DEFAULT_VALUE;
+    m_dev_ctx.ias_zone_attr.current_zone_sens_level = ZB_ZCL_IAS_ZONE_CURRENT_ZONE_SENSITIVITY_LEVEL_DEFAULT_VALUE;
+    m_dev_ctx.ias_zone_attr.cie_short_addr = 0x0000;
+    m_dev_ctx.ias_zone_attr.cie_ep = 0;
+
 
     m_dev_ctx.power_config_attr.voltage = 29;
+    m_dev_ctx.power_config_attr.size = ZB_ZCL_POWER_CONFIG_BATTERY_SIZE_CR2;
+    m_dev_ctx.power_config_attr.quantity= 1;
+    m_dev_ctx.power_config_attr.rated_voltage = 30;
+    m_dev_ctx.power_config_attr.alarm_mask = ZB_ZCL_POWER_CONFIG_BATTERY_ALARM_STATE_DEFAULT_VALUE;
+    m_dev_ctx.power_config_attr.voltage_min_threshold = 20;
+    m_dev_ctx.power_config_attr.battery_percentage_remaining = 255;
 
-    ZB_ZCL_SET_ATTRIBUTE(HA_CONTACT_ENDPOINT,
-                        ZB_ZCL_CLUSTER_ID_POWER_CONFIG,
-                        ZB_ZCL_CLUSTER_SERVER_ROLE,
-                        ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID,
-                        &m_dev_ctx.power_config_attr.voltage,
-                        ZB_FALSE);
+    zb_uint8_t percent =  m_dev_ctx.power_config_attr.battery_percentage_remaining;
+    zb_zcl_status_t zcl_status;
+    zcl_status = zb_zcl_set_attr_val(HA_CONTACT_ENDPOINT, 
+                                     ZB_ZCL_CLUSTER_ID_POWER_CONFIG, 
+                                     ZB_ZCL_CLUSTER_SERVER_ROLE, 
+                                     ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID, 
+                                     (zb_uint8_t *)&percent, 
+                                     ZB_FALSE);
+    if(zcl_status != ZB_ZCL_STATUS_SUCCESS)
+    {
+        NRF_LOG_INFO("Set BATTERY_PERCENTAGE_REMAINING fail. zcl_status: %d", zcl_status);
+    }
 
-    //ZB_ZCL_SET_DIRECTLY_ATTR_VAL8(m_dev_ctx.ias_zone_attr.zone_state, ZB_ZCL_IAS_ZONE_ZONESTATE_ENROLLED);
-
-    // ZB_ZCL_SET_ATTRIBUTE(HA_CONTACT_ENDPOINT,
-    //                     ZB_ZCL_CLUSTER_ID_IAS_ZONE,
-    //                     ZB_ZCL_CLUSTER_SERVER_ROLE,
-    //                     ZB_ZCL_ATTR_IAS_ZONE_ZONESTATE_ID,
-    //                     &m_dev_ctx.ias_zone_attr.zone_state,
-    //                     ZB_FALSE);
                            
 }
 
@@ -238,24 +254,32 @@ static zb_void_t contact_send_notification_req(zb_bufid_t bufid, zb_uint16_t on_
 
 static void check_contact(){
     zb_ret_t zb_err_code;
+    zb_bool_t cmd = false;
 
-    ZB_ZCL_SET_ATTRIBUTE(HA_CONTACT_ENDPOINT,
-                        ZB_ZCL_CLUSTER_ID_POWER_CONFIG,
-                        ZB_ZCL_CLUSTER_SERVER_ROLE,
-                        ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID,
-                        &m_dev_ctx.power_config_attr.voltage,
-                        ZB_FALSE);
+    m_dev_ctx.power_config_attr.battery_percentage_remaining--;
+    zb_uint8_t percent =  m_dev_ctx.power_config_attr.battery_percentage_remaining;
+    zb_zcl_status_t zcl_status;
+    zcl_status = zb_zcl_set_attr_val(HA_CONTACT_ENDPOINT, 
+                                     ZB_ZCL_CLUSTER_ID_POWER_CONFIG, 
+                                     ZB_ZCL_CLUSTER_SERVER_ROLE, 
+                                     ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID, 
+                                     &percent, 
+                                     ZB_FALSE);
+    if(zcl_status != ZB_ZCL_STATUS_SUCCESS) {
+        NRF_LOG_INFO("Set BATTERY_PERCENTAGE_REMAINING fail. zcl_status: %d", zcl_status);
+    }
 
     if(nrf_drv_gpiote_in_is_set(KONTACTOR_PIN)){
         // kontaktron otwarty
         NRF_LOG_INFO("Contact open");
-        // zb_buf_get_out_delayed(izs_send_enroll_req);
-        zb_err_code = zb_buf_get_out_delayed_ext(contact_send_notification_req,(zb_bool_t)true, 0);
-        ZB_ERROR_CHECK(zb_err_code);
+        cmd = true;
     } else{
         // kontaktron złączony
         NRF_LOG_INFO("Contact close");
-        zb_err_code = zb_buf_get_out_delayed_ext(contact_send_notification_req,(zb_bool_t)false, 0);
+        cmd = false;
+    }
+    if(m_dev_ctx.ias_zone_attr.zone_state == ZB_ZCL_IAS_ZONE_ZONESTATE_ENROLLED){
+        zb_err_code = zb_buf_get_out_delayed_ext(contact_send_notification_req,cmd, 0);
         ZB_ERROR_CHECK(zb_err_code);
     }
 }
@@ -271,34 +295,9 @@ static void izs_send_enroll_req(zb_bufid_t bufid){
         HA_CONTACT_ENDPOINT,
         ZB_AF_HA_PROFILE_ID,
         NULL,
-        ZB_ZCL_IAS_ZONE_ZONETYPE_CONTACT_SWITCH,
+        m_dev_ctx.ias_zone_attr.zone_type,
         0);
 
-}
-
-void write_response_request(zb_bufid_t bufid){
-     NRF_LOG_INFO("ZB_ZCL_GENERAL_SEND_WRITE_ATTR_RESP");
-    zb_uint8_t * p_cmd_buf;
-    zb_uint8_t  seq_number = ZCL_CTX().seq_number;
-     
-    ZB_ZCL_GENERAL_INIT_WRITE_ATTR_RESP_EXT(bufid,
-                                            p_cmd_buf,
-                                            ZB_ZCL_FRAME_DIRECTION_TO_CLI,
-                                            seq_number,
-                                            0,
-                                            0
-    );
-    ZB_ZCL_GENERAL_SUCCESS_WRITE_ATTR_RESP(p_cmd_buf);
-    ZB_ZCL_GENERAL_SEND_WRITE_ATTR_RESP(bufid,
-                                        p_cmd_buf,
-                                        m_dev_ctx.ias_zone_attr.ias_cie_address,
-                                        ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
-                                        m_dev_ctx.ias_zone_attr.cie_ep,
-                                        HA_CONTACT_ENDPOINT,
-                                        ZB_AF_HA_PROFILE_ID,
-                                        ZB_ZCL_CLUSTER_ID_IAS_ZONE,
-                                        NULL
-    );
 }
 
 zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
@@ -306,9 +305,10 @@ zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
   zb_bufid_t zcl_cmd_buf = param;
   zb_zcl_parsed_hdr_t *cmd_info = ZB_BUF_GET_PARAM(zcl_cmd_buf, zb_zcl_parsed_hdr_t);
   zb_uint8_t cmd_processed = ZB_FALSE;
-  TRACE_MSG(TRACE_APP1, ">> izs_zcl_cmd_handler %i", (FMT__H, param));
-  ZB_ZCL_DEBUG_DUMP_HEADER(cmd_info);
-  TRACE_MSG(TRACE_APP1, "payload size: %i", (FMT__D, zb_buf_len(zcl_cmd_buf)));
+  
+    NRF_LOG_INFO("zcl cluster id: 0x%x", cmd_info->cluster_id);
+    NRF_LOG_INFO("zcl cmd_id: 0x%x", cmd_info->cmd_id);
+
   if (cmd_info->cmd_direction == ZB_ZCL_FRAME_DIRECTION_TO_SRV)
   {
    if (cmd_info->cluster_id == ZB_ZCL_CLUSTER_ID_IAS_ZONE &&
@@ -345,10 +345,9 @@ zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
 
                 NRF_LOG_INFO("auto enroll request mode - send EnrollRequest");
                 
-                //zb_buf_get_out_delayed(izs_send_enroll_req);
-                zb_buf_get_out_delayed(write_response_request);
+                zb_buf_get_out_delayed(izs_send_enroll_req);
 
-                cmd_processed = ZB_TRUE;
+                cmd_processed = ZB_FALSE;
                }
              }
              break;
@@ -373,36 +372,7 @@ zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
                 m_dev_ctx.ias_zone_attr.cie_ep = cmd_info->addr_data.common_data.src_endpoint;
                 zb_nvram_write_dataset(ZB_NVRAM_HA_DATA);
                 check_contact();
-            }
-           
-        //   TRACE_MSG(TRACE_APP1, "ZB_ZCL_CMD_IAS_ZONE_ZONE_ENROLL_RESPONSE_ID", (FMT__0));
-        //   src_ep = ZB_ZCL_PARSED_HDR_SHORT_DATA(cmd_info).src_endpoint;
-        //   src_addr = ZB_ZCL_PARSED_HDR_SHORT_DATA(cmd_info).source.u.short_addr;
-        //   /* Note: after a call to this function buffer becomes invalid */
-        //   cmd_processed = zb_zcl_process_ias_zone_specific_commands(param);
-        //   TRACE_MSG(TRACE_APP1, "cmd_processed %hd", (FMT__H, cmd_processed));
-        //   if (IZS_DEVICE_IS_ENROLLED())
-        //   {
-            // TRACE_MSG(TRACE_APP1, "device is enrolled, save data", (FMT__0));
-            // /* set cie short addr and ep values; correct values maybe
-            //  * already set in izs_zcl_cmd_handler() */
-            // g_device_ctx.zone_attr.cie_ep = src_ep;
-            // g_device_ctx.zone_attr.cie_short_addr = src_addr;
-            // zb_zcl_poll_control_set_client_addr(IZS_DEVICE_ENDPOINT, src_addr, src_ep);
-
-            // zb_nvram_write_dataset(ZB_NVRAM_HA_DATA);
- 
-//             zb_buf_get_out_delayed(izs_go_on_guard);
-// #ifdef IZS_OTA
-//             izs_check_and_get_ota_server(0);
-// #endif
-// #ifdef FAST_POLLING_DURING_COMMISSIONING
-//             izs_start_fast_polling_for_commissioning(IZS_DEVICE_TURBO_POLL_AFTER_ENROLL_DURATION * 1000l);
-// #endif /* FAST_POLLING_DURING_COMMISSIONING */
-//             /* force a ZoneStatusChange in case of silent tamper or motion alarms */
-//             ZB_SCHEDULE_APP_ALARM(izs_read_sensor_status, 0, (ZB_TIME_ONE_SECOND>>1));
-        //   }
-          
+            }         
           cmd_processed = ZB_TRUE;
           break;
         }
@@ -412,37 +382,13 @@ zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
       }
     }
   }
-  
-  NRF_LOG_INFO("<< izs_zcl_cmd_handler processed %hd", cmd_processed);
+
   return cmd_processed;
 }
 
-static zb_void_t zcl_device_cb(zb_bufid_t bufid)
-{
-    //zb_uint8_t                       cluster_id;
-    //zb_uint8_t                       attr_id;
-    zb_zcl_device_callback_param_t * p_device_cb_param = ZB_BUF_GET_PARAM(bufid, zb_zcl_device_callback_param_t);
 
-    NRF_LOG_INFO("zcl_device_cb id %hd", p_device_cb_param->device_cb_id);
 
-    /* Set default response value. */
-    p_device_cb_param->status = RET_OK;
-
-    switch (p_device_cb_param->device_cb_id)
-    {
-        case ZB_ZCL_CMD_WRITE_ATTRIB:
-            NRF_LOG_INFO("ZB_ZCL_CMD_WRITE_ATTRIB");
-            break;
-
-        default:
-            p_device_cb_param->status = RET_ERROR;
-            break;
-    }
-
-    NRF_LOG_INFO("zcl_device_cb status: %hd", p_device_cb_param->status);
-}
-
-void zigbee_device_signal_callback(zb_bufid_t bufid)
+void zboss_signal_handler(zb_bufid_t bufid)
 {
     zb_zdo_app_signal_hdr_t  * p_sg_p = NULL;
     zb_zdo_app_signal_type_t   sig    = zb_get_app_signal(bufid, &p_sg_p);
@@ -454,22 +400,28 @@ void zigbee_device_signal_callback(zb_bufid_t bufid)
             if (status == RET_OK)
             {
                 NRF_LOG_INFO("Network connected");
-                m_dev_ctx.ias_zone_attr.cie_short_addr = 0x0000;
-                m_dev_ctx.ias_zone_attr.cie_ep = 1;
-                zb_buf_get_out_delayed(izs_send_enroll_req);
             }
         break;
+
+        case ZB_ZDO_SIGNAL_LEAVE:
+            m_dev_ctx.ias_zone_attr.zone_state = ZB_ZCL_IAS_ZONE_ZONESTATE_NOT_ENROLLED;
+            ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
+        break;
+
+        case ZB_COMMON_SIGNAL_CAN_SLEEP:
+            {
+//                zb_zdo_signal_can_sleep_params_t *can_sleep_params = ZB_ZDO_SIGNAL_GET_PARAMS(p_sg_p, zb_zdo_signal_can_sleep_params_t);
+//                NRF_LOG_INFO("Can sleep for %ld ms", can_sleep_params->sleep_tmo);
+                zb_sleep_now();
+            }
+        break;
+        
         default:
-            break;
+            /* No application-specific behavior is required. Call default signal handler. */
+            ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
+        break;
     }
-}
 
-void zboss_signal_handler(zb_bufid_t bufid)
-{
-    zigbee_device_signal_callback(bufid);
-
-    /* No application-specific behavior is required. Call default signal handler. */
-    ZB_ERROR_CHECK(zigbee_default_signal_handler(bufid));
 
     if (bufid)
     {
@@ -479,15 +431,12 @@ void zboss_signal_handler(zb_bufid_t bufid)
 
 static zb_void_t sleepy_device_setup(void)
 {
-//    zb_set_rx_on_when_idle(true);
+    zb_set_rx_on_when_idle(false);
 
-// #if ! defined DISABLE_POWER_CONSUMPTION_OPTIMIZATION
-//     /* If sleepy behaviour is enabled, power off unused RAM to save maximum energy */
-//     if (ZB_PIBCACHE_RX_ON_WHEN_IDLE() == ZB_FALSE)
-//     {
-//         zigbee_power_down_unused_ram();
-//     }
-// #endif /* ! defined DISABLE_POWER_CONSUMPTION_OPTIMIZATION */
+    if (ZB_PIBCACHE_RX_ON_WHEN_IDLE() == ZB_FALSE)
+    {
+        zigbee_power_down_unused_ram();
+    }
 }
 
 
@@ -500,6 +449,7 @@ static void gpio_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
         if(action == NRF_GPIOTE_POLARITY_HITOLO){
             NRF_LOG_INFO("Button press");
             zb_bdb_reset_via_local_action(0);
+            NVIC_SystemReset();
         }
         break;
     case KONTACTOR_PIN:
@@ -528,6 +478,8 @@ static void gpio_init(void)
     // inicjalizacja wyjscia
     err_code = nrf_drv_gpiote_out_init(BOARD_LED_PIN, &led_out_config);
     APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_out_set(BOARD_LED_PIN);
 
     // struktura konfiguracyjna wejście - przycisk
     nrf_drv_gpiote_in_config_t button_in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
@@ -576,10 +528,18 @@ int main(void)
     zb_set_long_address(ieee_addr);
 
     /* Set static long IEEE address. */
-    zb_set_network_router_role(IEEE_CHANNEL_MASK);
-    // zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
+    zb_set_network_ed_role(IEEE_CHANNEL_MASK);
 
-    zb_set_nvram_erase_at_start(ERASE_PERSISTENT_CONFIG);
+
+    uint32_t pin_state = nrf_gpio_pin_read(BOARD_BUTTON_PIN);
+    if (pin_state == 0)
+    {
+        zb_bool_t erase = ZB_TRUE;
+        NRF_LOG_INFO("Forcing flash erasure due to pin state");
+        zb_set_nvram_erase_at_start(erase);
+    }
+
+    zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));
 
     sleepy_device_setup();
@@ -587,16 +547,12 @@ int main(void)
     /* Initialize application context structure. */
     UNUSED_RETURN_VALUE(ZB_MEMSET(&m_dev_ctx, 0, sizeof(m_dev_ctx)));
 
-    /* Register callback for handling ZCL commands. */
-    ZB_ZCL_REGISTER_DEVICE_CB(zcl_device_cb);
-
     /* Register dimmer switch device context (endpoints). */
     ZB_AF_REGISTER_DEVICE_CTX(&cotact_ctx);
 
     ZB_AF_SET_ENDPOINT_HANDLER(HA_CONTACT_ENDPOINT, izs_zcl_cmd_handler);
 
-    bulb_clusters_attr_init();
-
+    contact_sensor_clusters_attr_init();
 
     /** Start Zigbee Stack. */
     zb_err_code = zboss_start_no_autostart();

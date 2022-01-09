@@ -44,7 +44,7 @@
 #define NETWORK_LED_PIN NRF_GPIO_PIN_MAP(0,12)   
 #define BOARD_BUTTON_PIN NRF_GPIO_PIN_MAP(1,06)   
 
-
+#define ZB_ROUTER_ROLE
 
 #if !defined ZB_ROUTER_ROLE
 #error Define ZB_ROUTER_ROLE to compile light bulb (Router) source code.
@@ -328,6 +328,7 @@ static void gpio_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
         if(action == NRF_GPIOTE_POLARITY_HITOLO){
             NRF_LOG_INFO("Button press");
             zb_bdb_reset_via_local_action(0);
+            NVIC_SystemReset();
         }
         break;
     default:
@@ -397,7 +398,16 @@ int main(void)
     /* Set static long IEEE address. */
     zb_set_network_router_role(IEEE_CHANNEL_MASK);
     zb_set_max_children(MAX_CHILDREN);
-    zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
+
+
+    uint32_t pin_state = nrf_gpio_pin_read(BOARD_BUTTON_PIN);
+    if (pin_state == 0)
+    {
+        zb_bool_t erase = ZB_TRUE;
+        NRF_LOG_INFO("Forcing flash erasure due to pin state");
+        zb_set_nvram_erase_at_start(erase);
+    }
+
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));
 
     /* Initialize application context structure. */

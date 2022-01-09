@@ -179,6 +179,7 @@ typedef struct
     zb_uint8_t rated_voltage;
     zb_uint8_t alarm_mask;
     zb_uint8_t voltage_min_threshold;
+    zb_uint8_t battery_percentage_remaining;
 } power_config_attr_t;
 
 //power_config_attr_t power_config_attr;
@@ -191,19 +192,19 @@ typedef struct
     @param rated_voltage - pointer to variable to store BatteryRatedVoltage attribute
     @param alarm_mask - pointer to variable to store BatteryAlarmMask attribute
     @param voltage_min_threshold - pointer to variable to store BatteryVoltageMinThreshold attribute
-
-#define ZB_ZCL_DECLARE_POWER_CONFIG_ATTRIB_LIST(attr_list,                                  \
-    voltage, size, quantity, rated_voltage, alarm_mask, voltage_min_threshold)              \
-  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                               \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID, (voltage))              \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_SIZE_ID, (size))                    \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_QUANTITY_ID, (quantity))            \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_RATED_VOLTAGE_ID, (rated_voltage))  \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_ALARM_MASK_ID, (alarm_mask ))       \
-  ZB_ZCL_SET_ATTR_DESC(ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_MIN_THRESHOLD_ID, (voltage_min_threshold))  \
-  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
-
+    @param battery_percentage_remaining - pointer to variable to store BatteryPercentageRemaining attribute
 */
+#define ZB_ZCL_DECLARE_POWER_CONFIG_ATTRIB_LIST_EXTEND_WITH_PERCENTAGE(attr_list,                                                      \
+    voltage, size, quantity, rated_voltage, alarm_mask, voltage_min_threshold, battery_percentage_remaining)                                  \
+  ZB_ZCL_START_DECLARE_ATTRIB_LIST(attr_list)                                                                   \
+  ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID((voltage),),                               \
+  ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_SIZE_ID((size),),                                     \
+  ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_QUANTITY_ID((quantity),),                             \
+  ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_RATED_VOLTAGE_ID((rated_voltage),),                   \
+  ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_ALARM_MASK_ID((alarm_mask ),),                        \
+  ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_MIN_THRESHOLD_ID((voltage_min_threshold),),   \
+  ZB_SET_ATTR_DESCR_WITH_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID((battery_percentage_remaining),),    \
+  ZB_ZCL_FINISH_DECLARE_ATTRIB_LIST
 
 #endif
 
