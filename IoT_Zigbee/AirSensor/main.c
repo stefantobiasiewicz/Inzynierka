@@ -34,8 +34,12 @@
 #define MAX_PRESSURE_VALUE                 1100                                 /**< Maximum pressure value as returned by the simulated measurement function. */
 #define PRESSURE_VALUE_INCREMENT           5                                    /**< Value by which the temperature value is incremented/decremented for each call to the simulated measurement function. */
 
-#if !defined ZB_ED_ROLE
-#error Define ZB_ED_ROLE to compile End Device source code.
+#define MAX_CHILDREN 10
+
+#define ZB_ROUTER_ROLE
+
+#if !defined ZB_ROUTER_ROLE
+#error Define ZB_ROUTER_ROLE to compile light bulb (Router) source code.
 #endif
 
 #define TWI_INSTANCE_ID     0
@@ -606,7 +610,9 @@ int main(void)
     zb_set_long_address(ieee_addr);
 
     /* Set static long IEEE address. */
-    zb_set_network_ed_role(IEEE_CHANNEL_MASK);
+    zb_set_network_router_role(IEEE_CHANNEL_MASK);
+    zb_set_max_children(MAX_CHILDREN);
+
     // zigbee_erase_persistent_storage(ERASE_PERSISTENT_CONFIG);
     uint32_t pin_state = nrf_gpio_pin_read(BOARD_BUTTON_PIN);
     if (pin_state == 0)
@@ -616,9 +622,10 @@ int main(void)
         zb_set_nvram_erase_at_start(erase);
     }
 
-    zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
+
+
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));
-    zb_set_rx_on_when_idle(ZB_FALSE);
+
 
     /* Initialize application context structure. */
     UNUSED_RETURN_VALUE(ZB_MEMSET(&m_dev_ctx, 0, sizeof(m_dev_ctx)));

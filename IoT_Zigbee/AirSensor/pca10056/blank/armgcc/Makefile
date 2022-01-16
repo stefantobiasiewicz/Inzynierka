@@ -128,7 +128,7 @@ INC_FOLDERS += \
 
 # Libraries common to all targets
 LIB_FILES += \
-  $(SDK_ROOT)/external/zboss/lib/gcc/libzboss.ed.a \
+  $(SDK_ROOT)/external/zboss/lib/gcc/libzboss.a \
   $(SDK_ROOT)/external/zboss/lib/gcc/nrf52840/nrf_radio_driver.a \
 
 # Optimization flags
@@ -145,7 +145,6 @@ CFLAGS += -DCONFIG_GPIO_AS_PINRESET
 CFLAGS += -DENABLE_FEM
 CFLAGS += -DFLOAT_ABI_HARD
 CFLAGS += -DNRF52840_XXAA
-CFLAGS += -DZB_ED_ROLE
 CFLAGS += -DZB_TRACE_LEVEL=0
 CFLAGS += -DZB_TRACE_MASK=0
 CFLAGS += -mcpu=cortex-m4
@@ -170,7 +169,7 @@ ASMFLAGS += -DCONFIG_GPIO_AS_PINRESET
 ASMFLAGS += -DENABLE_FEM
 ASMFLAGS += -DFLOAT_ABI_HARD
 ASMFLAGS += -DNRF52840_XXAA
-ASMFLAGS += -DZB_ED_ROLE
+
 
 # Linker flags
 LDFLAGS += $(OPT)

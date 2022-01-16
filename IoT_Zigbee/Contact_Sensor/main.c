@@ -283,7 +283,7 @@ static void battery_measure(zb_uint8_t *battery, zb_uint8_t *percent){
     nrf_drv_saadc_uninit();
 
     *battery = (zb_uint8_t) (new_voltage_value * 0.0351); //3.6 / 1024 * 10
-    *percent = (zb_uint8_t) (new_voltage_value * 0.00351 * 66.666); // 3.6 / 1024 * 0.015
+    *percent = (zb_uint8_t) (new_voltage_value * 0.00351 * 66.666); // 3.6 / 1024 * 66.666
 }
 
 static void check_contact(){
