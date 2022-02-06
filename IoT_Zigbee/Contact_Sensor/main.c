@@ -44,9 +44,9 @@
 #define ZB_ED_ROLE
 #endif
 
-#define BOARD_LED_PIN NRF_GPIO_PIN_MAP(0,13)  
-#define BOARD_BUTTON_PIN  NRF_GPIO_PIN_MAP(0,02)
-#define KONTACTOR_PIN  NRF_GPIO_PIN_MAP(0,24)
+#define BOARD_LED_PIN NRF_GPIO_PIN_MAP(0,05)  
+#define BOARD_BUTTON_PIN  NRF_GPIO_PIN_MAP(0,30)
+#define KONTACTOR_PIN  NRF_GPIO_PIN_MAP(0,19)
 
 
 #define SAADC_SAMPLES_IN_BUFFER 1                 //Number of SAADC samples in RAM before returning a SAADC event. For low power SAADC set this constant to 1. Otherwise the EasyDMA will be enabled for an extended time which consumes high current.
@@ -357,32 +357,14 @@ zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
           case ZB_ZCL_CMD_WRITE_ATTRIB:
             {
                zb_zcl_write_attr_req_t *write_attr_req;
-               /* Check that we receive the Write Attributes cmd for the CIE address
-                  If so, start fast polling */
                write_attr_req = (zb_zcl_write_attr_req_t*)zb_buf_begin(zcl_cmd_buf);
                if (ZB_ZCL_ATTR_IAS_ZONE_IAS_CIE_ADDRESS_ID == write_attr_req->attr_id)
                {
-                
-                ZB_64BIT_ADDR_COPY(write_attr_req->attr_value, &m_dev_ctx.ias_zone_attr.ias_cie_address);
-
-                NRF_LOG_INFO("CIE full address 0x%x", m_dev_ctx.ias_zone_attr.ias_cie_address);
-                NRF_LOG_INFO("CIE full address[0] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[0]);
-                NRF_LOG_INFO("CIE full address[1] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[1]);
-                NRF_LOG_INFO("CIE full address[2] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[2]);
-                NRF_LOG_INFO("CIE full address[3] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[3]);
-                NRF_LOG_INFO("CIE full address[4] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[4]);
-                NRF_LOG_INFO("CIE full address[5] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[5]);
-                NRF_LOG_INFO("CIE full address[6] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[6]);
-                NRF_LOG_INFO("CIE full address[7] 0x%x",cmd_info->addr_data.common_data.source.u.ieee_addr[7]);
-                m_dev_ctx.ias_zone_attr.ias_cie_address = 0x0f99f914004b1200;
-                m_dev_ctx.ias_zone_attr.ias_cie_address = 0x00124b0014d9990f;
                 m_dev_ctx.ias_zone_attr.cie_short_addr = cmd_info->addr_data.common_data.source.u.short_addr;
                 m_dev_ctx.ias_zone_attr.cie_ep = cmd_info->addr_data.common_data.src_endpoint;
                 NRF_LOG_INFO("CIE address is updated. New cie_short_addr = 0x%x, cie_ep = 0x%x ",
                           m_dev_ctx.ias_zone_attr.cie_short_addr, m_dev_ctx.ias_zone_attr.cie_ep);
-
-                NRF_LOG_INFO("auto enroll request mode - send EnrollRequest");
-                
+             
                 zb_buf_get_out_delayed(izs_send_enroll_req);
 
                 cmd_processed = ZB_FALSE;
@@ -402,7 +384,6 @@ zb_uint8_t izs_zcl_cmd_handler(zb_uint8_t param)
         {
             zb_zcl_ias_zone_enroll_response_value_param_t *response_param;
             response_param = (zb_zcl_ias_zone_enroll_response_value_param_t*)zb_buf_begin(zcl_cmd_buf);
-            NRF_LOG_INFO("ZB_ZCL_IAS_ZONE_ZONE_ENROLL_RESPONSE - STATUS: 0x%x, ZONE_ID: 0x%x", response_param->enroll_response, response_param->zone_id);
             if(response_param->enroll_response == ZB_ZCL_STATUS_SUCCESS){
                 m_dev_ctx.ias_zone_attr.zone_state = ZB_ZCL_IAS_ZONE_ZONESTATE_ENROLLED;
                 m_dev_ctx.ias_zone_attr.zone_id = response_param->zone_id;
@@ -485,9 +466,9 @@ static void gpio_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action){
     {
     case BOARD_BUTTON_PIN:
         if(action == NRF_GPIOTE_POLARITY_HITOLO){
-            NRF_LOG_INFO("Button press");
-            zb_bdb_reset_via_local_action(0);
-            NVIC_SystemReset();
+            // NRF_LOG_INFO("Button press");
+            // zb_bdb_reset_via_local_action(0);
+            // NVIC_SystemReset();
         }
         break;
     case KONTACTOR_PIN:
@@ -567,7 +548,7 @@ int main(void)
 
     /* Set static long IEEE address. */
     zb_set_network_ed_role(IEEE_CHANNEL_MASK);
-
+    zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
 
     uint32_t pin_state = nrf_gpio_pin_read(BOARD_BUTTON_PIN);
     if (pin_state == 0)
@@ -577,7 +558,6 @@ int main(void)
         zb_set_nvram_erase_at_start(erase);
     }
 
-    zb_set_ed_timeout(ED_AGING_TIMEOUT_64MIN);
     zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));
 
     sleepy_device_setup();

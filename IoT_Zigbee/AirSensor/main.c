@@ -107,12 +107,6 @@ ZB_ZCL_DECLARE_MULTI_SENSOR_EP(multi_sensor_ep,
 
 ZBOSS_DECLARE_DEVICE_CTX_1_EP(multi_sensor_ctx, multi_sensor_ep);
 
-
-static sensorsim_cfg_t   m_temperature_sim_cfg;                                 /**< Temperature sensor simulator configuration. */
-static sensorsim_state_t m_temperature_sim_state;                               /**< Temperature sensor simulator state. */
-static sensorsim_cfg_t   m_pressure_sim_cfg;                                    /**< Pressure sensor simulator configuration. */
-static sensorsim_state_t m_pressure_sim_state;                                  /**< Pressure sensor simulator state. */
-
 APP_TIMER_DEF(zb_app_timer);
 
 
@@ -423,27 +417,6 @@ static void zb_app_timer_handler(void * context)
     }
 }
 
-/**@brief Function for initializing the sensor simulators.
- */
-static void sensor_simulator_init(void)
-{
-    m_temperature_sim_cfg.min          = MIN_TEMPERATURE_VALUE;
-    m_temperature_sim_cfg.max          = MAX_TEMPERATURE_VALUE;
-    m_temperature_sim_cfg.incr         = TEMPERATURE_VALUE_INCREMENT;
-    m_temperature_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_temperature_sim_state, &m_temperature_sim_cfg);
-
-    m_pressure_sim_cfg.min          = MIN_PRESSURE_VALUE;
-    m_pressure_sim_cfg.max          = MAX_PRESSURE_VALUE;
-    m_pressure_sim_cfg.incr         = PRESSURE_VALUE_INCREMENT;
-    m_pressure_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_pressure_sim_state, &m_pressure_sim_cfg);
-
-
-}
-
 
 /**@brief Zigbee stack event handler.
  *
@@ -543,7 +516,6 @@ int main(void)
     /* Initialize loging system and GPIOs. */
     timers_init();
     log_init();
-    sensor_simulator_init();
     leds_init();
 
     gpio_init();
@@ -621,11 +593,6 @@ int main(void)
         NRF_LOG_INFO("Forcing flash erasure due to pin state");
         zb_set_nvram_erase_at_start(erase);
     }
-
-
-
-    zb_set_keepalive_timeout(ZB_MILLISECONDS_TO_BEACON_INTERVAL(3000));
-
 
     /* Initialize application context structure. */
     UNUSED_RETURN_VALUE(ZB_MEMSET(&m_dev_ctx, 0, sizeof(m_dev_ctx)));

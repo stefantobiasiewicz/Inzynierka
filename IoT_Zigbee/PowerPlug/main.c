@@ -149,7 +149,6 @@ static void on_off_set_value(zb_bool_t on)
     {
         nrf_drv_gpiote_out_clear(RELAY_PIN);
     }
-    zb_nvram_write_dataset(ZB_NVRAM_HA_DATA);
 }
 
 static void on_off_set_on_start_value(){
